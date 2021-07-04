@@ -1,0 +1,21 @@
+table {
+    border-collapse: collapse;
+    font: italic small-caps bold 16px cursive;
+}
+
+table > caption {
+    font-size: 1.2em;
+}
+
+td {
+    border: 1px solid black;
+    padding: 5px;
+}
+
+.red {
+    color: red;
+}
+
+.green {
+    color: green;
+}
