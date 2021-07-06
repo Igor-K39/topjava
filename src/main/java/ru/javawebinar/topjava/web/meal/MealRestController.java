@@ -7,6 +7,8 @@ import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.service.MealService;
 import ru.javawebinar.topjava.to.MealTo;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Collection;
 
 import static ru.javawebinar.topjava.util.MealsUtil.DEFAULT_CALORIES_PER_DAY;
@@ -33,6 +35,11 @@ public class MealRestController {
         int userId = authUserId();
         log.info("getAll for user id {}", userId);
         return getTos(service.getAll(userId), DEFAULT_CALORIES_PER_DAY);
+    }
+
+    public Collection<MealTo> getAllFilteredByDateTime(LocalDate fromDate, LocalDate toDate,
+                                                   LocalTime fromTime, LocalTime toTime) {
+        return service.getAllFilteredByDateTime(fromDate, toDate, fromTime, toTime, authUserId());
     }
 
     public Meal save(Meal meal) {
