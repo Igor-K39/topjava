@@ -1,9 +1,11 @@
 package ru.javawebinar.topjava.repository.inmemory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.repository.MealRepository;
-import ru.javawebinar.topjava.util.MealsUtil;
+import ru.javawebinar.topjava.web.meal.MealRestController;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -13,21 +15,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static ru.javawebinar.topjava.web.SecurityUtil.authUserId;
-
 @Repository
 public class InMemoryMealRepository implements MealRepository {
-    private static final Comparator<Meal> mealComparator = Comparator.comparing(Meal::getDate).reversed();
+    private static final Logger log = LoggerFactory.getLogger(InMemoryMealRepository.class);
+    private static final Comparator<Meal> mealComparator = Comparator
+            .comparing(Meal::getDate).reversed()
+            .thenComparing(Meal::getTime).reversed();
 
     private final Map<Integer, Map<Integer, Meal>> repository = new ConcurrentHashMap<>();
     private final AtomicInteger counter = new AtomicInteger(0);
 
-    {
-        MealsUtil.meals.forEach(meal -> save(authUserId(), meal));
-    }
-
     @Override
     public Meal save(int userId, Meal meal) {
+        log.info("save {} for user id {}", meal, userId);
         if (meal.isNew()) {
             int id = counter.incrementAndGet();
             meal.setId(id);
@@ -39,17 +39,20 @@ public class InMemoryMealRepository implements MealRepository {
     }
 
     @Override
-    public boolean delete(int userId, int mealId) {
-        return repository.getOrDefault(userId, Collections.emptyMap()).remove(mealId) != null;
+    public boolean delete(int userId, int id) {
+        log.info("get id {} for user id {}", id, userId);
+        return repository.getOrDefault(userId, Collections.emptyMap()).remove(id) != null;
     }
 
     @Override
-    public Meal get(int userId, int mealId) {
-        return repository.getOrDefault(userId, Collections.emptyMap()).get(mealId);
+    public Meal get(int userId, int id) {
+        log.info("get id {} for user id {}", id, userId);
+        return repository.getOrDefault(userId, Collections.emptyMap()).get(id);
     }
 
     @Override
     public Collection<Meal> getAll(int userId) {
+        log.info("getAll for user id {}", userId);
         return repository.getOrDefault(userId, Collections.emptyMap())
                 .values()
                 .stream()
