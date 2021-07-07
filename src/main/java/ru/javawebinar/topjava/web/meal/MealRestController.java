@@ -6,13 +6,18 @@ import org.springframework.stereotype.Controller;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.service.MealService;
 import ru.javawebinar.topjava.to.MealTo;
+import ru.javawebinar.topjava.util.MealsUtil;
+import ru.javawebinar.topjava.util.ValidationUtil;
+import ru.javawebinar.topjava.web.SecurityUtil;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 import static ru.javawebinar.topjava.util.MealsUtil.DEFAULT_CALORIES_PER_DAY;
 import static ru.javawebinar.topjava.util.MealsUtil.getTos;
+import static ru.javawebinar.topjava.util.Util.isBetweenHalfOpen;
 import static ru.javawebinar.topjava.web.SecurityUtil.authUserId;
 
 @Controller
@@ -38,8 +43,13 @@ public class MealRestController {
     }
 
     public Collection<MealTo> getAllFilteredByDateTime(LocalDate fromDate, LocalDate toDate,
-                                                   LocalTime fromTime, LocalTime toTime) {
-        return service.getAllFilteredByDateTime(fromDate, toDate, fromTime, toTime, authUserId());
+                                                       LocalTime fromTime, LocalTime toTime) {
+        Collection<Meal> meals = service.getBetweenDatesInclusive(fromDate, toDate, authUserId());
+
+        Collection<MealTo> mealTos = MealsUtil.getTos(meals, SecurityUtil.authUserCaloriesPerDay());
+        return mealTos.stream()
+                .filter(meal -> isBetweenHalfOpen(meal.getDateTime().toLocalTime(), fromTime, toTime))
+                .collect(Collectors.toList());
     }
 
     public Meal create(Meal meal) {
@@ -48,8 +58,9 @@ public class MealRestController {
         return service.save(authUserId(), meal);
     }
 
-    public Meal update(Meal meal) {
+    public Meal update(Meal meal, int id) {
         int userid = authUserId();
+        ValidationUtil.assureIdConsistent(meal, id);
         log.info("update {} for user {}", meal, userid);
         return service.save(authUserId(), meal);
     }
