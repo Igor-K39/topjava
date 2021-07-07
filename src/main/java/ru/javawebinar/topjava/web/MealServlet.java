@@ -51,10 +51,10 @@ public class MealServlet extends HttpServlet {
                 Integer.parseInt(request.getParameter("calories")));
 
         if (meal.isNew()) {
-            log.info("Create {}", meal);
+            log.debug("Create {}", meal);
             mealRestController.create(meal);
         } else {
-            log.info("Update {}", meal);
+            log.debug("Update {}", meal);
             mealRestController.update(meal);
         }
         response.sendRedirect("meals");
@@ -66,19 +66,11 @@ public class MealServlet extends HttpServlet {
 
         switch (action == null ? "all" : action) {
             case "delete":
-                int id = getId(request);
-                log.info("Delete {}", id);
-                mealRestController.delete(id);
-                response.sendRedirect("meals");
+                delete(request, response);
                 break;
             case "create":
             case "update":
-                final Meal meal = "create".equals(action)
-                        ? new Meal(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES), "", 1000)
-                        : mealRestController.get(getId(request));
-
-                request.setAttribute("meal", meal);
-                request.getRequestDispatcher("mealForm.jsp").forward(request, response);
+                forwardMealForm(request, response, action);
                 break;
             case "filter":
                 filter(request, response);
@@ -90,6 +82,23 @@ public class MealServlet extends HttpServlet {
                 request.getRequestDispatcher("meals.jsp").forward(request, response);
                 break;
         }
+    }
+
+    private void forwardMealForm(HttpServletRequest request, HttpServletResponse response, String action) throws ServletException, IOException {
+        log.debug("forwardMealForm(), action: {}", action);
+        final Meal meal = "create".equals(action)
+                ? new Meal(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES), "", 1000)
+                : mealRestController.get(getId(request));
+
+        request.setAttribute("meal", meal);
+        request.getRequestDispatcher("mealForm.jsp").forward(request, response);
+    }
+
+    private void delete(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        int id = getId(request);
+        log.debug("Delete {}", id);
+        mealRestController.delete(id);
+        response.sendRedirect("meals");
     }
 
     private void filter(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -118,6 +127,6 @@ public class MealServlet extends HttpServlet {
 
     private String getParameterOrDefault(HttpServletRequest request, String name, String defaultValue) {
         String parameter = request.getParameterMap().containsKey(name) ? request.getParameter(name) : defaultValue;
-        return  parameter.isEmpty() ? defaultValue : parameter;
+        return parameter.isEmpty() ? defaultValue : parameter;
     }
 }
