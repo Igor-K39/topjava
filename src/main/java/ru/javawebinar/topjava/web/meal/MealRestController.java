@@ -42,9 +42,15 @@ public class MealRestController {
         return service.getAllFilteredByDateTime(fromDate, toDate, fromTime, toTime, authUserId());
     }
 
-    public Meal save(Meal meal) {
+    public Meal create(Meal meal) {
         int userId = authUserId();
-        log.info("{} {} for user {}", meal.isNew() ? "create" : "update", meal, userId);
+        log.info("create {} for user {}", meal, userId);
+        return service.save(authUserId(), meal);
+    }
+
+    public Meal update(Meal meal) {
+        int userid = authUserId();
+        log.info("update {} for user {}", meal, userid);
         return service.save(authUserId(), meal);
     }
 

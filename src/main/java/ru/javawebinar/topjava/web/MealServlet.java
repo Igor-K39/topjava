@@ -27,7 +27,7 @@ public class MealServlet extends HttpServlet {
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
-        MealsUtil.meals.forEach(mealRestController::save);
+        MealsUtil.meals.forEach(mealRestController::create);
     }
 
     @Override
@@ -46,8 +46,13 @@ public class MealServlet extends HttpServlet {
                 request.getParameter("description"),
                 Integer.parseInt(request.getParameter("calories")));
 
-        log.info(meal.isNew() ? "Create {}" : "Update {}", meal);
-        mealRestController.save(meal);
+        if (meal.isNew()) {
+            log.info("Create {}", meal);
+            mealRestController.create(meal);
+        } else {
+            log.info("Update {}", meal);
+            mealRestController.update(meal);
+        }
         response.sendRedirect("meals");
     }
 
