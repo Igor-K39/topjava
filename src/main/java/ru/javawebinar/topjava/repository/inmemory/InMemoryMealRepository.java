@@ -5,11 +5,9 @@ import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.repository.MealRepository;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -19,28 +17,22 @@ public class InMemoryMealRepository implements MealRepository {
             .comparing(Meal::getDate)
             .thenComparing(Meal::getTime).reversed();
 
-    private final Map<Integer, Map<Integer, Meal>> repository = new ConcurrentHashMap<>();
-    private final AtomicInteger counter = new AtomicInteger(0);
+    private final Map<Integer, InMemoryBaseRepository<Meal>> repository = new ConcurrentHashMap<>();
 
     @Override
     public Meal save(int userId, Meal meal) {
-        Map<Integer, Meal> userMeals = repository.computeIfAbsent(userId, ConcurrentHashMap::new);
-        if (meal.isNew()) {
-            int id = counter.incrementAndGet();
-            meal.setId(id);
-            return userMeals.computeIfAbsent(id, key -> meal);
-        }
-        return userMeals.computeIfPresent(meal.getId(), (key, value) -> meal);
+        InMemoryBaseRepository<Meal> userMeals = repository.computeIfAbsent(userId, key -> new InMemoryBaseRepository<>());
+        return userMeals.save(meal);
     }
 
     @Override
     public boolean delete(int userId, int id) {
-        return repository.getOrDefault(userId, Collections.emptyMap()).remove(id) != null;
+        return repository.getOrDefault(userId, new InMemoryBaseRepository<>()).delete(id);
     }
 
     @Override
     public Meal get(int userId, int id) {
-        return repository.getOrDefault(userId, Collections.emptyMap()).get(id);
+        return repository.getOrDefault(userId, new InMemoryBaseRepository<>()).get(id);
     }
 
     @Override
@@ -50,7 +42,7 @@ public class InMemoryMealRepository implements MealRepository {
 
     @Override
     public Collection<Meal> getAllFilteredByPredicate(int userId, Predicate<Meal> predicate) {
-        return repository.getOrDefault(userId, Collections.emptyMap()).values().stream()
+        return repository.getOrDefault(userId, new InMemoryBaseRepository<>()).getAll().stream()
                 .filter(predicate)
                 .sorted(mealComparator)
                 .collect(Collectors.toList());
